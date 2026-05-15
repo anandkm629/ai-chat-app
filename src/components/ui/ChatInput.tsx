@@ -18,11 +18,18 @@ export default function ChatInput({ onSend }: Props) {
   };
 
   return (
-    <div className="p-4 border-t flex gap-2">
+    <div className="p-4 border-t bg-white flex gap-2">
       <input
         type="text"
         value={input}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={(e) =>
+          setInput(e.target.value)
+        }
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleSend();
+          }
+        }}
         placeholder="Type your message..."
         className="flex-1 border rounded-lg px-4 py-2"
       />
