@@ -9,10 +9,7 @@ interface Props {
   loading: boolean;
 }
 
-export default function ChatWindow({
-  messages,
-  loading,
-}: Props) {
+export default function ChatWindow({ messages, loading }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,7 +19,9 @@ export default function ChatWindow({
   }, [messages, loading]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="h-full overflow-y-auto pb-25">
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      
       {messages.map((message, index) => (
         <ChatMessage
           key={index}
@@ -30,13 +29,8 @@ export default function ChatWindow({
         />
       ))}
 
-      {loading && (
-        <div className="bg-gray-200 w-fit px-4 py-2 rounded-lg">
-          Thinking...
-        </div>
-      )}
-
       <div ref={bottomRef} />
     </div>
+  </div>
   );
 }
