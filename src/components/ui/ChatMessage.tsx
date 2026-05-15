@@ -4,16 +4,28 @@ interface Props {
   message: Message;
 }
 
-export default function ChatMessage({ message }: Props) {
+export default function ChatMessage({
+  message,
+}: Props) {
+  const isUser = message.role === "user";
+
   return (
     <div
-      className={`p-3 rounded-lg max-w-xl ${
-        message.role === "user"
-          ? "bg-blue-500 text-white ml-auto"
-          : "bg-gray-200 text-black"
+      className={`flex ${
+        isUser
+          ? "justify-end"
+          : "justify-start"
       }`}
     >
-      {message.content}
+      <div
+        className={`max-w-2xl px-4 py-3 rounded-2xl ${
+          isUser
+            ? "bg-black text-white"
+            : "bg-white border"
+        }`}
+      >
+        {message.content}
+      </div>
     </div>
   );
 }
