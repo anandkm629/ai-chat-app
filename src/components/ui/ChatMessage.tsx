@@ -1,33 +1,34 @@
 import { Message } from "@/types/chat";
 import ReactMarkdown from "react-markdown";
+import { Copy, Check } from "lucide-react";
+import { useState } from "react";
 
-import { Prism as SyntaxHighlighter } 
-from "react-syntax-highlighter";
-import { oneDark } 
-from "react-syntax-highlighter/dist/cjs/styles/prism";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
 interface Props {
   message: Message;
 }
 
-export default function ChatMessage({
-  message,
-}: Props) {
+export default function ChatMessage({ message }: Props) {
   const isUser = message.role === "user";
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  };
 
   return (
-    <div
-      className={`flex ${
-        isUser
-          ? "justify-end"
-          : "justify-start"
-      }`}
-    >
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={`max-w-full px-4 py-3 mb-2 rounded-2xl ${
-          isUser
-            ? "bg-black text-white"
-            : "bg-white border"
+          isUser ? "bg-black text-white" : "bg-white border"
         }`}
       >
         <ReactMarkdown
@@ -35,22 +36,43 @@ export default function ChatMessage({
             code(props) {
               const { children, className } = props;
 
-              const match = /language-(\w+)/.exec(
-                className || ""
-              );
+              const match = /language-(\w+)/.exec(className || "");
 
               return match ? (
-                <SyntaxHighlighter
-                  style={oneDark}
-                  language={match[1]}
-                  PreTag="div"
-                >
-                  {String(children).replace(/\n$/, "")}
-                </SyntaxHighlighter>
+                <div className="relative my-4">
+                  <button
+                    onClick={() => handleCopy(String(children))}
+                    className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded bg-gray-800 px-2 py-1 text-xs text-white hover:bg-gray-700"
+                  >
+                    {copied ? (
+                      <>
+                        <Check size={14} />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} />
+                        Copy
+                      </>
+                    )}
+                  </button>
+
+                  <SyntaxHighlighter
+                    style={oneDark}
+                    language={match[1]}
+                    PreTag="div"
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: "12px",
+                      padding: "16px",
+                      overflowX: "auto",
+                    }}
+                  >
+                    {String(children).replace(/\n$/, "")}
+                  </SyntaxHighlighter>
+                </div>
               ) : (
-                <code className="bg-gray-200 px-1 rounded">
-                  {children}
-                </code>
+                <code className="bg-gray-200 px-1 rounded">{children}</code>
               );
             },
           }}
