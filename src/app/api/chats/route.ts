@@ -1,16 +1,36 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 export async function GET() {
   try {
-    const chats = await prisma.chat.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        messages: true,
-      },
-    });
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const chats =
+      await prisma.chat.findMany({
+        where: {
+          userId,
+        },
+
+        orderBy: {
+          createdAt: "desc",
+        },
+
+        include: {
+          messages: true,
+        },
+      });
 
     return NextResponse.json(chats);
   } catch (error) {
@@ -29,11 +49,26 @@ export async function GET() {
 
 export async function POST() {
   try {
-    const chat = await prisma.chat.create({
-      data: {
-        title: "New Chat",
-      },
-    });
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const chat =
+      await prisma.chat.create({
+        data: {
+          title: "New Chat",
+          userId,
+        },
+      });
 
     return NextResponse.json(chat);
   } catch (error) {

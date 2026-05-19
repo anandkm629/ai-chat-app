@@ -1,20 +1,33 @@
 import { groq } from "@/lib/groq";
 import { prisma } from "@/lib/prisma";
 
-export const runtime = "nodejs";
+import { auth } from "@clerk/nextjs/server";
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request
+) {
   try {
-    const body = await req.json();
-    console.log(body);
-    
+    const { userId } = await auth();
 
-    // SAVE USER MESSAGE
+    if (!userId) {
+      return new Response(
+        "Unauthorized",
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const body = await req.json();
+
+    const { message, chatId } = body;
+
+    // Save user message
     await prisma.message.create({
       data: {
-        chatId: body.chatId,
+        content: message,
         role: "user",
-        content: body.message,
+        chatId,
       },
     });
 
@@ -28,10 +41,12 @@ export async function POST(req: Request) {
           },
           {
             role: "user",
-            content: body.message,
+            content: message,
           },
         ],
+
         model: "llama-3.1-8b-instant",
+
         stream: true,
       });
 
@@ -53,12 +68,12 @@ export async function POST(req: Request) {
           );
         }
 
-        // SAVE AI RESPONSE
+        // Save AI response
         await prisma.message.create({
           data: {
-            chatId: body.chatId,
-            role: "assistant",
             content: fullResponse,
+            role: "assistant",
+            chatId,
           },
         });
 

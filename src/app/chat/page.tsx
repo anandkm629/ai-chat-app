@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { useAuth } from "@clerk/nextjs";
+
 import ChatInput from "../../components/ui/ChatInput";
 import ChatWindow from "../../components/ui/ChatWindow";
 import Sidebar from "../../components/ui/Sidebar";
@@ -9,6 +11,8 @@ import Sidebar from "../../components/ui/Sidebar";
 import { Chat, Message } from "@/types/chat";
 
 export default function ChatPage() {
+  const { userId } = useAuth();
+
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] =
     useState("");
@@ -16,31 +20,44 @@ export default function ChatPage() {
   const [loading, setLoading] =
     useState(false);
 
+  const [sidebarOpen, setSidebarOpen] =
+    useState(false);
+
   const currentChat = chats.find(
     (chat) => chat.id === currentChatId
   );
+
 
   useEffect(() => {
     fetchChats();
   }, []);
 
   const fetchChats = async () => {
-    try {
-      const response = await fetch(
-        "/api/chats"
+  try {
+    const response = await fetch(
+      "/api/chats"
+    );
+
+    const data = await response.json();
+
+    const safeChats = Array.isArray(data)
+      ? data
+      : [];
+
+    setChats(safeChats);
+
+    if (safeChats.length > 0) {
+      setCurrentChatId(
+        safeChats[0].id
       );
-
-      const data = await response.json();
-
-      setChats(data);
-
-      if (data.length > 0) {
-        setCurrentChatId(data[0].id);
-      }
-    } catch (error) {
-      console.log(error);
+    } else {
+      // Auto create first chat
+      await createNewChat();
     }
-  };
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   const createNewChat = async () => {
     try {
@@ -59,6 +76,8 @@ export default function ChatPage() {
       ]);
 
       setCurrentChatId(newChat.id);
+
+      setSidebarOpen(false);
     } catch (error) {
       console.log(error);
     }
@@ -94,99 +113,25 @@ export default function ChatPage() {
   };
 
   const sendMessage = async (
-  text: string
-) => {
-  if (!currentChatId) return;
+    text: string
+  ) => {
+    if (!currentChatId) return;
 
-  const isFirstMessage =
-    (currentChat?.messages
-      ?.length || 0) === 0;
+    const isFirstMessage =
+      (currentChat?.messages
+        ?.length || 0) === 0;
 
-  const generatedTitle =
-    text.length > 30
-      ? text.slice(0, 30) + "..."
-      : text;
+    const generatedTitle =
+      text.length > 30
+        ? text.slice(0, 30) + "..."
+        : text;
 
-  const userMessage: Message = {
-    role: "user",
-    content: text,
-  };
+    const userMessage: Message = {
+      role: "user",
+      content: text,
+    };
 
-  // FIRST update local state
-  setChats((prev) =>
-    prev.map((chat) => {
-      if (
-        chat.id !== currentChatId
-      ) {
-        return chat;
-      }
-
-      return {
-        ...chat,
-
-        title: isFirstMessage
-          ? generatedTitle
-          : chat.title,
-
-        messages: [
-          ...(chat.messages || []),
-          userMessage,
-        ],
-      };
-    })
-  );
-
-  // THEN update DB title
-  if (isFirstMessage) {
-    try {
-      await fetch(
-        `/api/chats/${currentChatId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            title: generatedTitle,
-          }),
-        }
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  setLoading(true);
-
-  try {
-    const response = await fetch(
-      "/api/chat",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-        body: JSON.stringify({
-          message: text,
-          chatId: currentChatId,
-        }),
-      }
-    );
-    
-
-    if (!response.body) return;
-
-    const reader =
-      response.body.getReader();
-
-    const decoder =
-      new TextDecoder();
-
-    let aiResponse = "";
-
-    // Add empty assistant message
+    // Update local state immediately
     setChats((prev) =>
       prev.map((chat) => {
         if (
@@ -197,28 +142,69 @@ export default function ChatPage() {
 
         return {
           ...chat,
+
+          title: isFirstMessage
+            ? generatedTitle
+            : chat.title,
+
           messages: [
             ...(chat.messages || []),
-            {
-              role: "assistant",
-              content: "",
-            },
+            userMessage,
           ],
         };
       })
     );
 
-    while (true) {
-      const { done, value } =
-        await reader.read();
+    // Update DB title
+    if (isFirstMessage) {
+      try {
+        await fetch(
+          `/api/chats/${currentChatId}`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              title: generatedTitle,
+            }),
+          }
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    }
 
-      if (done) break;
+    setLoading(true);
 
-      const chunk =
-        decoder.decode(value);
+    try {
+      const response = await fetch(
+        "/api/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            message: text,
+            chatId: currentChatId,
+          }),
+        }
+      );
 
-      aiResponse += chunk;
+      if (!response.body) return;
 
+      const reader =
+        response.body.getReader();
+
+      const decoder =
+        new TextDecoder();
+
+      let aiResponse = "";
+
+      // Add empty assistant message
       setChats((prev) =>
         prev.map((chat) => {
           if (
@@ -228,51 +214,111 @@ export default function ChatPage() {
             return chat;
           }
 
-          const updatedMessages =
-            [
-              ...(chat.messages ||
-                []),
-            ];
-
-          updatedMessages[
-            updatedMessages.length -
-              1
-          ] = {
-            role: "assistant",
-            content: aiResponse,
-          };
-
           return {
             ...chat,
-            messages:
-              updatedMessages,
+            messages: [
+              ...(chat.messages || []),
+              {
+                role: "assistant",
+                content: "",
+              },
+            ],
           };
         })
       );
+
+      while (true) {
+        const { done, value } =
+          await reader.read();
+
+        if (done) break;
+
+        const chunk =
+          decoder.decode(value);
+
+        aiResponse += chunk;
+
+        setChats((prev) =>
+          prev.map((chat) => {
+            if (
+              chat.id !==
+              currentChatId
+            ) {
+              return chat;
+            }
+
+            const updatedMessages =
+              [
+                ...(chat.messages ||
+                  []),
+              ];
+
+            updatedMessages[
+              updatedMessages.length -
+                1
+            ] = {
+              role: "assistant",
+              content: aiResponse,
+            };
+
+            return {
+              ...chat,
+              messages:
+                updatedMessages,
+            };
+          })
+        );
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.log(error);
-  } finally {
-    setLoading(false);
+  };
+
+  // Protect page
+  if (!userId) {
+    return (
+      <div className="h-screen flex items-center justify-center text-xl">
+        Please sign in
+      </div>
+    );
   }
-};
 
   return (
-    <div className="h-screen flex bg-[#f7f7f8]">
+    <div className="h-dvh flex overflow-hidden bg-[#f7f7f8]">
+      
       <Sidebar
         chats={chats}
         currentChatId={
           currentChatId
         }
-        onSelectChat={
-          setCurrentChatId
-        }
+        onSelectChat={(
+          id: string
+        ) => {
+          setCurrentChatId(id);
+          setSidebarOpen(false);
+        }}
         onNewChat={createNewChat}
         onDeleteChat={deleteChat}
       />
 
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1 overflow-hidden">
+      <div className="flex flex-1 flex-col min-h-0">
+        
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center p-4 border-b bg-white shrink-0">
+          <button
+            onClick={() =>
+              setSidebarOpen(true)
+            }
+            className="text-2xl"
+          >
+            ☰
+          </button>
+        </div>
+
+        {/* Chat Area */}
+        <div className="flex-1 min-h-0 overflow-hidden">
           <ChatWindow
             messages={
               currentChat?.messages ||
@@ -282,9 +328,12 @@ export default function ChatPage() {
           />
         </div>
 
-        <ChatInput
-          onSend={sendMessage}
-        />
+        {/* Input */}
+        <div className="shrink-0 border-t bg-white">
+          <ChatInput
+            onSend={sendMessage}
+          />
+        </div>
       </div>
     </div>
   );
