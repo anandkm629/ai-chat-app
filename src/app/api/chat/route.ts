@@ -22,7 +22,7 @@ export async function POST(
 
     const { message, chatId } = body;
 
-    // Save user message
+    // Save current user message
     await prisma.message.create({
       data: {
         content: message,
@@ -31,6 +31,29 @@ export async function POST(
       },
     });
 
+    // Fetch previous messages
+    const previousMessages =
+      await prisma.message.findMany({
+        where: {
+          chatId,
+        },
+
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+
+    // Format messages for Groq
+    const formattedMessages =
+      previousMessages.map((msg) => ({
+        role: msg.role as
+          | "user"
+          | "assistant",
+
+        content: msg.content,
+      }));
+
+    // AI completion
     const completion =
       await groq.chat.completions.create({
         messages: [
@@ -39,10 +62,8 @@ export async function POST(
             content:
               "You are a helpful AI assistant.",
           },
-          {
-            role: "user",
-            content: message,
-          },
+
+          ...formattedMessages,
         ],
 
         model: "llama-3.1-8b-instant",
