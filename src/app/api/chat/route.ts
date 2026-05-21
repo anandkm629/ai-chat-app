@@ -3,73 +3,82 @@ import { prisma } from "@/lib/prisma";
 
 import { auth } from "@clerk/nextjs/server";
 
-export async function POST(
-  req: Request
-) {
+export async function POST(req: Request) {
   try {
     const { userId } = await auth();
 
     if (!userId) {
-      return new Response(
-        "Unauthorized",
-        {
-          status: 401,
-        }
-      );
+      return new Response("Unauthorized", {
+        status: 401,
+      });
     }
 
     const body = await req.json();
 
-    const { message, chatId } = body;
+    const { message, chatId, imageUrl } = body;
 
     // Save current user message
     await prisma.message.create({
       data: {
         content: message,
         role: "user",
+        imageUrl,
         chatId,
       },
     });
 
     // Fetch previous messages
-    const previousMessages =
-      await prisma.message.findMany({
-        where: {
-          chatId,
-        },
+    const previousMessages = await prisma.message.findMany({
+      where: {
+        chatId,
+      },
 
-        orderBy: {
-          createdAt: "asc",
-        },
-      });
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
 
     // Format messages for Groq
-    const formattedMessages =
-      previousMessages.map((msg) => ({
-        role: msg.role as
-          | "user"
-          | "assistant",
+    const formattedMessages = previousMessages.map((msg) => ({
+      role: msg.role as "user" | "assistant",
 
-        content: msg.content,
-      }));
+      content: msg.content,
+    }));
 
     // AI completion
-    const completion =
-      await groq.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a helpful AI assistant.",
-          },
+    const completion = await groq.chat.completions.create({
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
 
-          ...formattedMessages,
-        ],
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful AI assistant that can analyze images.",
+        },
 
-        model: "llama-3.1-8b-instant",
+        {
+          role: "user",
 
-        stream: true,
-      });
+          content: imageUrl
+            ? [
+                {
+                  type: "text",
+                  text: message || "Analyze this image",
+                },
+
+                {
+                  type: "image_url",
+
+                  image_url: {
+                    url: imageUrl,
+                  },
+                },
+              ]
+            : message,
+        },
+      ],
+
+      stream: true,
+    });
 
     const encoder = new TextEncoder();
 
@@ -78,15 +87,11 @@ export async function POST(
     const stream = new ReadableStream({
       async start(controller) {
         for await (const chunk of completion) {
-          const content =
-            chunk.choices[0]?.delta
-              ?.content || "";
+          const content = chunk.choices[0]?.delta?.content || "";
 
           fullResponse += content;
 
-          controller.enqueue(
-            encoder.encode(content)
-          );
+          controller.enqueue(encoder.encode(content));
         }
 
         // Save AI response
@@ -106,11 +111,8 @@ export async function POST(
   } catch (error) {
     console.log(error);
 
-    return new Response(
-      "Something went wrong",
-      {
-        status: 500,
-      }
-    );
+    return new Response("Something went wrong", {
+      status: 500,
+    });
   }
 }

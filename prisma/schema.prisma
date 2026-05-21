@@ -22,6 +22,8 @@ model Message {
   role      String
   content   String
 
+  imageUrl  String?
+
   createdAt DateTime @default(now())
 
   chatId    String

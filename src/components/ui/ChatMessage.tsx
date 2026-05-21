@@ -31,6 +31,13 @@ export default function ChatMessage({ message }: Props) {
           isUser ? "bg-black text-white" : "bg-white border"
         }`}
       >
+        {message.imageUrl && (
+  <img
+    src={message.imageUrl}
+    alt="uploaded"
+    className="mb-3 rounded-xl max-w-xs border"
+  />
+)}
         <ReactMarkdown
           components={{
             code(props) {
