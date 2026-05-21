@@ -2,47 +2,113 @@
 
 import { useState } from "react";
 
+import { UploadButton }
+from "@/utils/uploadthing";
+
+import { ImagePlus }
+from "lucide-react";
+
 interface Props {
-  onSend: (message: string) => void;
+  onSend: (message: string, imageUrl?: string) => void;
 }
 
 export default function ChatInput({ onSend }: Props) {
   const [input, setInput] = useState("");
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const [imageUrl, setImageUrl] = useState("");
 
-    onSend(input);
+  const handleSend = () => {
+    if (!input.trim() && !imageUrl) return;
+
+    onSend(input, imageUrl);
 
     setInput("");
+    setImageUrl("");
   };
 
   return (
-   <div className="border-t bg-white p-4">
-    <div className="max-w-4xl mx-auto flex gap-2">
-      
-      <input
-        type="text"
-        value={input}
-        onChange={(e) =>
-          setInput(e.target.value)
-        }
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleSend();
-          }
-        }}
-        placeholder="Send a message..."
-        className="flex-1 border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-black"
-      />
+    <div className="border-t bg-white p-4">
+      <div className="max-w-4xl mx-auto space-y-3">
+        {/* Image Preview */}
+        {imageUrl && (
+          <div className="relative w-fit">
+            <img
+              src={imageUrl}
+              alt="upload"
+              className="w-32 h-32 object-cover rounded-xl border"
+            />
 
-      <button
-        onClick={handleSend}
-        className="bg-black text-white px-6 rounded-xl"
-      >
-        Send
-      </button>
+            <button
+              onClick={() => setImageUrl("")}
+              className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Input Row */}
+        <div className="flex gap-2 items-center">
+          {/* Upload Button */}
+          <UploadButton
+  endpoint="imageUploader"
+
+  content={{
+    button() {
+      return <ImagePlus size={18} />;
+    },
+  }}
+
+  appearance={{
+    button:
+      "w-12 h-12 rounded-xl bg-black text-white flex items-center justify-center",
+  }}
+
+  onClientUploadComplete={(
+    res
+  ) => {
+    if (
+      res &&
+      res.length > 0
+    ) {
+      setImageUrl(
+        res[0].url
+      );
+    }
+  }}
+
+  onUploadError={(
+    error: Error
+  ) => {
+    alert(
+      `ERROR! ${error.message}`
+    );
+  }}
+/>
+
+          {/* Text Input */}
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSend();
+              }
+            }}
+            placeholder="Send a message..."
+            className="flex-1 border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+          />
+
+          {/* Send Button */}
+          <button
+            onClick={handleSend}
+            className="bg-black text-white px-6 py-3 rounded-xl"
+          >
+            Send
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
   );
 }

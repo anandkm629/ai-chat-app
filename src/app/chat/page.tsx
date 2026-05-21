@@ -113,7 +113,8 @@ export default function ChatPage() {
   };
 
   const sendMessage = async (
-    text: string
+    text: string,
+    imageUrl?: string
   ) => {
     if (!currentChatId) return;
 
@@ -129,6 +130,7 @@ export default function ChatPage() {
     const userMessage: Message = {
       role: "user",
       content: text,
+       imageUrl,
     };
 
     // Update local state immediately
@@ -189,6 +191,7 @@ export default function ChatPage() {
           },
           body: JSON.stringify({
             message: text,
+            imageUrl,
             chatId: currentChatId,
           }),
         }
