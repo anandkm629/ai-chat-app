@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 
-import { UploadButton }
-from "@/utils/uploadthing";
+import { UploadButton } from "@/utils/uploadthing";
 
-import { ImagePlus }
-from "lucide-react";
+import { ImagePlus } from "lucide-react";
 
 interface Props {
   onSend: (message: string, imageUrl?: string) => void;
@@ -48,46 +46,31 @@ export default function ChatInput({ onSend }: Props) {
         )}
 
         {/* Input Row */}
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-end">
           {/* Upload Button */}
           <UploadButton
-  endpoint="imageUploader"
-
-  content={{
-    button() {
-      return <ImagePlus size={18} />;
-    },
-  }}
-
-  appearance={{
-    button:
-      "w-12 h-12 rounded-xl bg-black text-white flex items-center justify-center",
-  }}
-
-  onClientUploadComplete={(
-    res
-  ) => {
-    if (
-      res &&
-      res.length > 0
-    ) {
-      setImageUrl(
-        res[0].url
-      );
-    }
-  }}
-
-  onUploadError={(
-    error: Error
-  ) => {
-    alert(
-      `ERROR! ${error.message}`
-    );
-  }}
-/>
+            endpoint="imageUploader"
+            content={{
+              button() {
+                return <ImagePlus size={18} />;
+              },
+            }}
+            appearance={{
+              button:
+                "w-12 h-12 rounded-xl bg-black text-white flex items-center justify-center",
+            }}
+            onClientUploadComplete={(res) => {
+              if (res && res.length > 0) {
+                setImageUrl(res[0].url);
+              }
+            }}
+            onUploadError={(error: Error) => {
+              alert(`ERROR! ${error.message}`);
+            }}
+          />
 
           {/* Text Input */}
-          <input
+          {/* <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -98,6 +81,37 @@ export default function ChatInput({ onSend }: Props) {
             }}
             placeholder="Send a message..."
             className="flex-1 border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+          /> */}
+          <textarea
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+
+              e.target.style.height = "auto";
+              e.target.style.height = e.target.scrollHeight + "px";
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+
+                handleSend();
+              }
+            }}
+            placeholder="Send a message..."
+            rows={1}
+            className="
+    flex-1
+    resize-none
+    overflow-hidden
+    max-h-40
+    border
+    rounded-2xl
+    px-4
+    py-3
+    outline-none
+    focus:ring-2
+    focus:ring-black
+  "
           />
 
           {/* Send Button */}
