@@ -28,16 +28,18 @@ export default function ChatMessage({ message }: Props) {
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={`max-w-full px-4 py-3 mb-2 rounded-2xl ${
-          isUser ? "bg-black text-white" : "bg-white border"
+          isUser
+            ? "bg-black text-white"
+            : "bg-white border dark:bg-[#1e1e1e] dark:border-gray-700 dark:text-white"
         }`}
       >
         {message.imageUrl && (
-  <img
-    src={message.imageUrl}
-    alt="uploaded"
-    className="mb-3 rounded-xl max-w-xs border"
-  />
-)}
+          <img
+            src={message.imageUrl}
+            alt="uploaded"
+            className="mb-3 rounded-xl max-w-xs border"
+          />
+        )}
         <ReactMarkdown
           components={{
             code(props) {
