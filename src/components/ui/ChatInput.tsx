@@ -25,7 +25,7 @@ export default function ChatInput({ onSend }: Props) {
   };
 
   return (
-    <div className="border-t bg-white p-4">
+    <div className="border-t bg-white dark:bg-[#111] p-4">
       <div className="max-w-4xl mx-auto space-y-3">
         {/* Image Preview */}
         {imageUrl && (
@@ -56,8 +56,23 @@ export default function ChatInput({ onSend }: Props) {
               },
             }}
             appearance={{
-              button:
-                "w-12 h-12 rounded-xl bg-black text-white flex items-center justify-center",
+              button: `
+    w-12
+    h-12
+    rounded-xl
+    bg-black
+    text-white
+    flex
+    items-center
+    justify-center
+    hover:bg-gray-900
+
+    dark:bg-white
+    dark:text-black
+    dark:hover:bg-gray-200
+
+    transition
+    `,
             }}
             onClientUploadComplete={(res) => {
               if (res && res.length > 0) {
@@ -111,13 +126,27 @@ export default function ChatInput({ onSend }: Props) {
     outline-none
     focus:ring-2
     focus:ring-black
+    dark:bg-[#1e1e1e]
+dark:text-white
+dark:border-gray-700
   "
           />
 
           {/* Send Button */}
           <button
             onClick={handleSend}
-            className="bg-black text-white px-6 py-3 rounded-xl"
+            className="
+  bg-black
+  text-white
+  px-6
+  py-3
+  rounded-xl
+  hover:bg-gray-900
+  dark:bg-white
+  dark:text-black
+  dark:hover:bg-gray-200
+  transition
+"
           >
             Send
           </button>

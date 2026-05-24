@@ -17,11 +17,28 @@ export default function Sidebar({
   onDeleteChat,
 }: Props) {
   return (
-    <div className="w-72 bg-black text-white flex flex-col">
+    <div
+      className="
+    w-72
+    bg-white
+    text-black
+    dark:bg-[#111]
+    dark:text-white
+    flex
+    flex-col
+    border-r
+    dark:border-gray-800
+  "
+    >
       <div className="p-4 border-b border-gray-800">
         <button
           onClick={onNewChat}
-          className="w-full bg-gray-800 hover:bg-gray-700 rounded-lg py-3"
+          className="w-full bg-black
+text-white
+hover:bg-gray-900
+dark:bg-white
+dark:text-black
+dark:hover:bg-gray-200 rounded-lg py-3"
         >
           + New Chat
         </button>
@@ -35,8 +52,8 @@ export default function Sidebar({
         {chats.map((chat) => (
           <div
             key={chat.id}
-            className={`flex items-center justify-between px-4 py-3 hover:bg-gray-800 ${
-              currentChatId === chat.id ? "bg-gray-800" : ""
+            className={`flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-[#1e1e1e] ${
+              currentChatId === chat.id ? "bg-gray-200 dark:bg-[#1e1e1e]" : ""
             }`}
           >
             <button
@@ -48,7 +65,7 @@ export default function Sidebar({
 
             <button
               onClick={() => onDeleteChat(chat.id)}
-              className="ml-2 text-gray-400 hover:text-red-500"
+              className="ml-2 text-gray-500 dark:text-gray-400 hover:text-red-500"
             >
               🗑
             </button>
