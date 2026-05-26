@@ -8,9 +8,10 @@ import { oneDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
 interface Props {
   message: Message;
+  isStreaming?: boolean;
 }
 
-export default function ChatMessage({ message }: Props) {
+export default function ChatMessage({ message , isStreaming,}: Props) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
 
@@ -88,6 +89,11 @@ export default function ChatMessage({ message }: Props) {
         >
           {message.content}
         </ReactMarkdown>
+         {isStreaming && (
+    <span className="ml-1 animate-pulse">
+      ▍
+    </span>
+  )}
       </div>
     </div>
   );
