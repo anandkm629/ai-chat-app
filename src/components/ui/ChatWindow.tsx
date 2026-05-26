@@ -35,7 +35,18 @@ export default function ChatWindow({ messages, loading }: Props) {
         )}
 
         {messages.map((message, index) => (
-          <ChatMessage key={index} message={message} />
+          // <ChatMessage key={index} message={message} />
+            <ChatMessage
+  key={index}
+  message={message}
+  isStreaming={
+    loading &&
+    index ===
+      messages.length - 1 &&
+    message.role ===
+      "assistant"
+  }
+/>
         ))}
 
         <div ref={bottomRef} />
