@@ -56,8 +56,10 @@ Users can:
 
 ## Home Page
 <img width="1919" height="962" alt="image" src="https://github.com/user-attachments/assets/b0f2d103-c599-4c8e-8924-25b778a00729" />
+
 ## Chat Interface
 <img width="1919" height="976" alt="image" src="https://github.com/user-attachments/assets/6b74c19f-a6a5-4dbc-91a5-7243ad9746f0" />
+
 ## Authentication
 <img width="1919" height="922" alt="image" src="https://github.com/user-attachments/assets/e12ed3be-0002-471d-a83a-df41605b3dcb" />
 
